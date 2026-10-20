@@ -1,5 +1,9 @@
+import importlib.util
+import os
+import tempfile
 import unittest
 from collections import Counter
+from pathlib import Path
 
 from encoder import (
     ESC,
@@ -9,6 +13,14 @@ from encoder import (
     encode,
     split_symbols,
 )
+
+
+def load_binary_module():
+    module_path = Path(__file__).with_name("binary-file.py")
+    spec = importlib.util.spec_from_file_location("binary_file_module", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class TestEncoder(unittest.TestCase):
@@ -99,6 +111,20 @@ class TestEncoder(unittest.TestCase):
         codes = sorted(canonical_codes(lengths).values())
         for i in range(len(codes) - 1):
             self.assertFalse(codes[i + 1].startswith(codes[i]))
+
+    def test_binary_file_round_trip(self):
+        binary_module = load_binary_module()
+        bit_string = "101101001011"
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_file.close()
+
+        try:
+            binary_module.write_binary_file(bit_string, temp_file.name)
+            self.assertEqual(binary_module.read_binary_file(temp_file.name), bit_string)
+        finally:
+            if os.path.exists(temp_file.name):
+                os.remove(temp_file.name)
 
 
 if __name__ == "__main__":
