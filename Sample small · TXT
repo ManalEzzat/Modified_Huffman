@@ -1,0 +1,4 @@
+Huffman coding gives short codes to frequent symbols and long codes to rare symbols.
+In the modified version, symbols with a probability below the minimum limit share one escape code.
+Each escaped symbol is then stored as eight raw bits after the escape code.
+Try different values of min_prob and compare the compressed file sizes.

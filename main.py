@@ -1,7 +1,9 @@
 import importlib.util
+import os
 from pathlib import Path
 
 from encoder import encode
+from decoder import decode
 
 
 def load_binary_module():
@@ -35,27 +37,43 @@ def compress_file():
 
     bitstring, lengths = encode(data, min_prob)
     binary_module = load_binary_module()
-    binary_module.write_binary_file(bitstring, out_path)
+    binary_module.write_binary_file(bitstring, out_path, lengths)
 
     original_size = len(data)
     bit_count = len(bitstring)
     data_size = (bit_count + 7) // 8
+    file_size = os.path.getsize(out_path)
 
     print("Original size:     ", original_size, "bytes")
     print("Encoded bits:      ", bit_count)
     print("Encoded data size: ", data_size, "bytes (without header)")
+    print("Compressed size:   ", file_size, "bytes (with header)")
     print("Symbols in table:  ", len(lengths))
     print("Compressed file:   ", out_path)
     if data_size > 0:
         print("Compression ratio: {:.2f}".format(original_size / data_size))
-    return bitstring, lengths
 
 
 def decompress_file():
-    file_path = input("Compressed file path: ").strip()
+    in_path = input("Compressed file path: ").strip()
+    out_path = input("Output decompressed file path: ").strip()
+
     binary_module = load_binary_module()
-    return binary_module.read_binary_file(file_path)
+    bitstring, lengths = binary_module.read_binary_file(in_path)
+    data = decode(bitstring, lengths)
+
+    with open(out_path, "wb") as file:
+        file.write(data)
+
+    print("Decompressed size: ", len(data), "bytes")
+    print("Decompressed file: ", out_path)
 
 
 if __name__ == "__main__":
-    compress_file()
+    choice = input("Compress (c) or Decompress (d)? ").strip().lower()
+    if choice == "c":
+        compress_file()
+    elif choice == "d":
+        decompress_file()
+    else:
+        print("Invalid choice.")
